@@ -1,0 +1,317 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <title>Advanced AI Assistant</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        /* Basic styling */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f8fa;
+            color: #333;
+            line-height: 1.5;
+        }
+
+
+        header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 30px;  /* Increased margin below header */
+            padding-bottom: 15px; /* Added padding at bottom of header */
+            border-bottom: 1px solid #eaeaea; /* Light separator line */
+        }
+
+
+        .logo {
+            height: 50px;
+            margin-right: 25px; /* Increased space between logo and text */
+        }
+
+
+        .header-text {
+            /* Container for header text */
+            display: flex;
+            flex-direction: column;
+        }
+
+
+        h1 {
+            color: #2c3e50;
+            margin: 0 0 5px 0; /* Reduced bottom margin */
+            font-size: 26px;   /* Adjusted font size */
+        }
+        
+        .subtitle {
+            color: #7f8c8d;
+            font-size: 16px;
+            font-weight: normal;
+        }
+
+
+        textarea {
+            width: 100%;
+            height: 120px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-size: 16px;
+            font-family: inherit;
+        }
+
+
+        button {
+            background-color: #3498db;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+
+
+        button:hover {
+            background-color: #2980b9;
+        }
+
+
+        button:disabled {
+            background-color: #95a5a6;
+            cursor: not-allowed;
+        }
+
+
+        #response-container {
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin-top: 20px;
+            overflow: hidden;
+            background-color: white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05); /* Subtle shadow */
+        }
+
+
+        select {
+            padding: 8px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            margin: 10px 0;
+            width: 100%;
+        }
+
+
+        .form-group {
+            margin-bottom: 15px; /* Space between form elements */
+        }
+
+
+        label {
+            font-weight: bold;
+            display: block;     /* Make label a block element */
+            margin-bottom: 5px; /* Space below label */
+        }
+
+
+        #response {
+            padding: 15px;
+            min-height: 100px;
+        }
+
+
+        #model-signature {
+            padding: 12px 15px;
+            background-color: #f8f9fa;
+            border-top: 1px solid #ddd;
+            font-size: 14px;
+            color: #666;
+        }
+
+
+        .loading {
+            color: #666;
+            font-style: italic;
+        }
+
+
+        .error {
+            color: #e74c3c;
+            background-color: #fadbd8;
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 4px solid #e74c3c;
+        }
+        
+        #timer {
+            font-size: 14px;
+            color: #666;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+
+
+<body>
+    <header>
+        <!-- Local logo reference with improved spacing -->
+        <img src="logo.png" alt="Company Logo" class="logo">
+        <div class="header-text">
+            <h1>Advanced AI Assistant</h1>
+            <span class="subtitle">Powered by enterprise-grade language models</span>
+        </div>
+    </header>
+    
+    <div class="form-group">
+        <label for="model-select">Choose AI Engine:</label>
+        <select id="model-select">
+            <option value="openrouter/auto">Smart Auto-Selection</option>
+            <option value="anthropic/claude-3-sonnet">Claude 3.7 Sonnet</option>
+            <option value="openai/gpt-4o">GPT-4o</option>
+            <option value="openai/gpt-3.5-turbo">GPT-3.5 Turbo</option>
+            <option value="perplexity/sonar-small-chat">GPT-o3 Mini</option>
+            <option value="perplexity/sonar-small-chat-v1:high">GPT-o3 Mini High</option>
+        </select>
+    </div>
+
+
+    <div class="form-group">
+        <label for="prompt">Your question or request:</label>
+        <textarea id="prompt" placeholder="Enter your question here..."></textarea>
+    </div>
+
+
+    <button id="submit-btn" onclick="sendPrompt()">Ask AI Assistant</button>
+
+
+    <div id="response-container" style="display: none;">
+        <div id="response"></div>
+        <div id="model-signature"></div>
+    </div>
+
+
+    <div id="timer"></div>
+
+
+    <script>
+        // API endpoint - replace with your actual API Gateway URL
+        const API_URL = "https://ylwynk6l46.execute-api.us-east-2.amazonaws.com/default/AdvancedAgentBackend";
+        
+        let timerInterval;
+        let startTime;
+
+
+        // Format a number with commas
+        function formatNumber(num) {
+            return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        }
+
+
+        async function sendPrompt() {
+            const promptElement = document.getElementById('prompt');
+            const responseContainer = document.getElementById('response-container');
+            const responseDiv = document.getElementById('response');
+            const modelSignatureDiv = document.getElementById('model-signature');
+            const timerDiv = document.getElementById('timer');
+            const submitBtn = document.getElementById('submit-btn');
+            const modelSelect = document.getElementById('model-select');
+            
+            const promptText = promptElement.value.trim();
+            const selectedModel = modelSelect.value;
+            
+            if (!promptText) {
+                responseDiv.innerHTML = '<p class="error">Please enter a question</p>';
+                responseContainer.style.display = 'block';
+                return;
+            }
+            
+            // Disable inputs during processing
+            promptElement.disabled = true;
+            modelSelect.disabled = true;
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Processing...';
+            
+            responseDiv.innerHTML = '<p class="loading">AI is thinking...</p>';
+            responseContainer.style.display = 'block';
+            modelSignatureDiv.innerHTML = '';
+            
+            // Start timer
+            startTime = new Date();
+            timerDiv.innerHTML = 'Request in progress...';
+            timerInterval = setInterval(() => {
+                const elapsed = Math.round((new Date() - startTime) / 1000);
+                timerDiv.innerHTML = `Processing time: ${elapsed} seconds`;
+            }, 1000);
+            
+            try {
+                console.log("Sending request to API with model: " + selectedModel);
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        prompt: promptText,
+                        model: selectedModel
+                    })
+                });
+                
+                clearInterval(timerInterval);
+                const elapsed = Math.round((new Date() - startTime) / 1000);
+                timerDiv.innerHTML = `Response received in ${elapsed} seconds`;
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error("API error:", errorText);
+                    throw new Error(`Server error (${response.status}): ${errorText}`);
+                }
+                
+                const data = await response.json();
+                console.log("API response:", data);
+                
+                if (data.error) {
+                    responseDiv.innerHTML = `<p class="error">Error: ${data.error}</p>`;
+                } else if (data.result) {
+                    // Format the response text
+                    const formattedText = data.result.content
+                        .replace(/\n/g, '<br>')
+                        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+                    
+                    responseDiv.innerHTML = formattedText;
+                    
+                    // Show model info
+                    if (data.result.model_used) {
+                        const model = data.result.model_used;
+                        const totalTokens = data.result.total_tokens || 0;
+                        const promptTokens = data.result.prompt_tokens || 0;
+                        const completionTokens = data.result.completion_tokens || 0;
+                        
+                        modelSignatureDiv.innerHTML = `
+                            <strong>Model:</strong> ${model}<br>
+                            <strong>Tokens:</strong> ${formatNumber(totalTokens)} total 
+                            (${formatNumber(promptTokens)} input, ${formatNumber(completionTokens)} output)
+                        `;
+                    }
+                } else {
+                    responseDiv.innerHTML = '<p class="error">Invalid response from server</p>';
+                }
+            } catch (error) {
+                console.error("Error:", error);
+                clearInterval(timerInterval);
+                responseDiv.innerHTML = `<p class="error">Error: ${error.message}</p>`;
+                timerDiv.innerHTML = '';
+            } finally {
+                // Re-enable inputs
+                promptElement.disabled = false;
+                modelSelect.disabled = false;
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Ask AI Assistant';
+            }
+        }
+    </script>
+</body>
+</html>
