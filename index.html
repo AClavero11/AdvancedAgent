@@ -204,21 +204,6 @@
         .forgot-password a:hover {
             text-decoration: underline;
         }
-        
-        .back-link {
-            display: block;
-            text-align: center;
-            margin-top: 15px;
-            color: #6c757d;
-            text-decoration: none;
-            font-size: 14px;
-            cursor: pointer;
-        }
-        
-        .back-link:hover {
-            text-decoration: underline;
-            color: var(--primary-color);
-        }
 
         /* Responsive adjustments */
         @media (max-width: 768px) {
@@ -284,7 +269,7 @@
                 <button id="login-button" class="btn btn-primary btn-block">Log In</button>
                 <div id="login-message" class="message"></div>
                 <div class="forgot-password">
-                    Forgot your password? <a href="#" id="forgot-password-link">Reset it here</a>
+                    Forgot your password? <a href="reset-password.html">Reset it here</a>
                 </div>
             </div>
 
@@ -306,118 +291,38 @@
                 <div id="signup-message" class="message"></div>
             </div>
         </div>
-
-        <!-- Password Reset - Step 1 -->
-        <div class="form-container" id="reset-password-step1" style="display: none;">
-            <h3 style="text-align: center; margin-top: 0; margin-bottom: 20px;">Reset Your Password</h3>
-            <div class="form-group">
-                <label for="reset-email">Email address</label>
-                <input type="email" id="reset-email" class="form-control" placeholder="Your email address">
-            </div>
-            <button id="send-reset-code-btn" class="btn btn-primary btn-block">Send Reset Code</button>
-            <div id="reset-step1-message" class="message"></div>
-            <a class="back-link" id="reset-to-login">Back to Login</a>
-        </div>
-
-        <!-- Password Reset - Step 2 -->
-        <div class="form-container" id="reset-password-step2" style="display: none;">
-            <h3 style="text-align: center; margin-top: 0; margin-bottom: 20px;">Enter Reset Code</h3>
-            <div class="form-group">
-                <label for="verification-code">Reset Code</label>
-                <input type="text" id="verification-code" class="form-control" placeholder="Code from email">
-            </div>
-            <div class="form-group">
-                <label for="new-password">New Password</label>
-                <input type="password" id="new-password" class="form-control" placeholder="New password">
-            </div>
-            <div class="form-group">
-                <label for="confirm-new-password">Confirm New Password</label>
-                <input type="password" id="confirm-new-password" class="form-control" placeholder="Confirm new password">
-            </div>
-            <button id="reset-password-btn" class="btn btn-primary btn-block">Reset Password</button>
-            <div id="reset-step2-message" class="message"></div>
-            <a class="back-link" id="back-to-step1">Back</a>
-        </div>
     </div>
 
     <script>
-        // FIXED API URL - Using the full URL from the error message
+        // API URL
         const API_URL = 'https://c9z46e3pgg.execute-api.us-east-2.amazonaws.com/prod/aac-api';
         
-        // Debug mode - set to true to see detailed console logs
-        const DEBUG = true;
-        
-        // Log function that only logs in DEBUG mode
-        function debugLog(...args) {
-            if (DEBUG) {
-                console.log(...args);
-            }
-        }
-
         // DOM Elements
         const loginTab = document.getElementById('login-tab');
         const signupTab = document.getElementById('signup-tab');
         const loginForm = document.getElementById('login-form');
         const signupForm = document.getElementById('signup-form');
         const authSection = document.getElementById('auth-section');
-        const resetPasswordStep1 = document.getElementById('reset-password-step1');
-        const resetPasswordStep2 = document.getElementById('reset-password-step2');
-        const forgotPasswordLink = document.getElementById('forgot-password-link');
-        const resetToLoginLink = document.getElementById('reset-to-login');
-        const backToStep1Link = document.getElementById('back-to-step1');
         const headerLoginBtn = document.getElementById('header-login-btn');
         const headerSignupBtn = document.getElementById('header-signup-btn');
-        const sendResetCodeBtn = document.getElementById('send-reset-code-btn');
-        const resetPasswordBtn = document.getElementById('reset-password-btn');
 
         // Tab Switching Functions
         function showLoginForm() {
-            authSection.style.display = 'block';
             loginForm.style.display = 'block';
             signupForm.style.display = 'none';
-            resetPasswordStep1.style.display = 'none';
-            resetPasswordStep2.style.display = 'none';
             loginTab.classList.add('active');
             signupTab.classList.remove('active');
         }
 
         function showSignupForm() {
-            authSection.style.display = 'block';
             loginForm.style.display = 'none';
             signupForm.style.display = 'block';
-            resetPasswordStep1.style.display = 'none';
-            resetPasswordStep2.style.display = 'none';
             loginTab.classList.remove('active');
             signupTab.classList.add('active');
         }
 
-        function showResetStep1() {
-            authSection.style.display = 'none';
-            resetPasswordStep1.style.display = 'block';
-            resetPasswordStep2.style.display = 'none';
-            document.getElementById('reset-email').value = '';
-            document.getElementById('reset-step1-message').textContent = '';
-            document.getElementById('reset-step1-message').className = 'message';
-        }
-
-        function showResetStep2(email) {
-            authSection.style.display = 'none';
-            resetPasswordStep1.style.display = 'none';
-            resetPasswordStep2.style.display = 'block';
-            document.getElementById('verification-code').value = '';
-            document.getElementById('new-password').value = '';
-            document.getElementById('confirm-new-password').value = '';
-            document.getElementById('reset-step2-message').textContent = '';
-            document.getElementById('reset-step2-message').className = 'message';
-            
-            // Store email for step 2
-            localStorage.setItem('resetEmail', email);
-        }
-
         // Message Display Function
         function showMessage(elementId, message, isError) {
-            debugLog(`Showing ${isError ? 'error' : 'success'} message: ${message}`);
-            
             const element = document.getElementById(elementId);
             element.textContent = message;
             if (isError) {
@@ -440,21 +345,6 @@
         headerSignupBtn.addEventListener('click', (e) => {
             e.preventDefault();
             showSignupForm();
-        });
-        
-        forgotPasswordLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            showResetStep1();
-        });
-        
-        resetToLoginLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            showLoginForm();
-        });
-        
-        backToStep1Link.addEventListener('click', (e) => {
-            e.preventDefault();
-            showResetStep1();
         });
 
         // Login Form Submission
@@ -522,7 +412,6 @@
             
             showMessage('signup-message', 'Creating account...', false);
             
-            // Use the correct API URL
             fetch(API_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -551,172 +440,6 @@
             });
         });
 
-        // Send Reset Code Button - FIXED FOR CORS AND NETWORK ISSUES
-        sendResetCodeBtn.addEventListener('click', () => {
-            debugLog('Send reset code button clicked');
-            
-            // Disable button to prevent multiple clicks
-            sendResetCodeBtn.disabled = true;
-            
-            const email = document.getElementById('reset-email').value.trim();
-            
-            if (!email) {
-                showMessage('reset-step1-message', 'Please enter your email address', true);
-                sendResetCodeBtn.disabled = false;
-                return;
-            }
-            
-            // Show loading state
-            sendResetCodeBtn.textContent = 'Sending...';
-            showMessage('reset-step1-message', 'Sending reset code...', false);
-            
-            // Use the correct API URL with cors mode explicitly set to "cors"
-            fetch(API_URL, {
-                method: 'POST',
-                mode: 'cors',
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify({
-                    requestType: 'auth',
-                    authAction: 'forgotPassword',
-                    email: email
-                })
-            })
-            .then(response => {
-                debugLog('Response status:', response.status);
-                return response.json();
-            })
-            .then(data => {
-                debugLog('API response:', data);
-                
-                // Reset button state
-                sendResetCodeBtn.textContent = 'Send Reset Code';
-                sendResetCodeBtn.disabled = false;
-                
-                if (data.error) {
-                    // Show specific error message
-                    showMessage('reset-step1-message', data.error, true);
-                } else {
-                    // Success case
-                    showMessage('reset-step1-message', 'Reset code sent! Check your email.', false);
-                    
-                    // Move to step 2 after delay
-                    setTimeout(() => {
-                        showResetStep2(email);
-                    }, 1500);
-                }
-            })
-            .catch(error => {
-                debugLog('API call error:', error);
-                
-                // Reset button state
-                sendResetCodeBtn.textContent = 'Send Reset Code';
-                sendResetCodeBtn.disabled = false;
-                
-                showMessage('reset-step1-message', 'Network error. Please check your connection and try again.', true);
-            });
-        });
-
-        // Reset Password Button - FIXED FOR CORS AND NETWORK ISSUES
-        resetPasswordBtn.addEventListener('click', () => {
-            debugLog('Reset password button clicked');
-            
-            // Disable button to prevent multiple clicks
-            resetPasswordBtn.disabled = true;
-            
-            const code = document.getElementById('verification-code').value.trim();
-            const newPassword = document.getElementById('new-password').value;
-            const confirmNewPassword = document.getElementById('confirm-new-password').value;
-            const email = localStorage.getItem('resetEmail');
-            
-            // Validation
-            if (!code) {
-                showMessage('reset-step2-message', 'Please enter the verification code', true);
-                resetPasswordBtn.disabled = false;
-                return;
-            }
-            
-            if (!newPassword) {
-                showMessage('reset-step2-message', 'Please enter a new password', true);
-                resetPasswordBtn.disabled = false;
-                return;
-            }
-            
-            if (newPassword !== confirmNewPassword) {
-                showMessage('reset-step2-message', 'Passwords do not match', true);
-                resetPasswordBtn.disabled = false;
-                return;
-            }
-            
-            if (!email) {
-                showMessage('reset-step2-message', 'Email information missing. Please start over.', true);
-                resetPasswordBtn.disabled = false;
-                setTimeout(() => {
-                    showResetStep1();
-                }, 1500);
-                return;
-            }
-            
-            // Show loading state
-            resetPasswordBtn.textContent = 'Resetting...';
-            showMessage('reset-step2-message', 'Resetting password...', false);
-            
-            // Use the correct API URL with cors mode
-            fetch(API_URL, {
-                method: 'POST',
-                mode: 'cors',
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify({
-                    requestType: 'auth',
-                    authAction: 'confirmForgotPassword',
-                    email: email,
-                    code: code,
-                    newPassword: newPassword
-                })
-            })
-            .then(response => {
-                debugLog('Response status:', response.status);
-                return response.json();
-            })
-            .then(data => {
-                debugLog('API response:', data);
-                
-                // Reset button state
-                resetPasswordBtn.textContent = 'Reset Password';
-                resetPasswordBtn.disabled = false;
-                
-                if (data.error) {
-                    showMessage('reset-step2-message', data.error, true);
-                } else {
-                    showMessage('reset-step2-message', 'Password reset successful!', false);
-                    
-                    // Clear stored email
-                    localStorage.removeItem('resetEmail');
-                    
-                    // Redirect to login after success
-                    setTimeout(() => {
-                        showLoginForm();
-                        document.getElementById('login-email').value = email;
-                        showMessage('login-message', 'Your password has been reset. You can now log in with your new password.', false);
-                    }, 1500);
-                }
-            })
-            .catch(error => {
-                debugLog('API call error:', error);
-                
-                // Reset button state
-                resetPasswordBtn.textContent = 'Reset Password';
-                resetPasswordBtn.disabled = false;
-                
-                showMessage('reset-step2-message', 'Network error. Please check your connection and try again.', true);
-            });
-        });
-
         // Enter key support for all forms
         document.getElementById('login-password').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
@@ -730,25 +453,10 @@
             }
         });
 
-        document.getElementById('reset-email').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                sendResetCodeBtn.click();
-            }
-        });
-
-        document.getElementById('confirm-new-password').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                resetPasswordBtn.click();
-            }
-        });
-
         // Check if user is already logged in on page load
         document.addEventListener('DOMContentLoaded', () => {
-            debugLog('Document loaded, checking token');
-            
             const idToken = localStorage.getItem('idToken');
             if (idToken) {
-                debugLog('Token found, redirecting to app');
                 window.location.href = 'app.html';
             }
             
@@ -758,8 +466,6 @@
                 this.src = 'https://via.placeholder.com/40x40?text=AI';
                 this.onerror = null;
             };
-            
-            debugLog('Initialization complete');
         });
     </script>
 </body>
