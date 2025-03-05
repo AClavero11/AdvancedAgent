@@ -24,6 +24,13 @@
         .app-title {
             font-size: 24px;
             font-weight: 500;
+            display: flex;
+            align-items: center;
+        }
+        
+        .app-title .logo {
+            height: 40px;
+            margin-right: 10px;
         }
         
         .user-info {
@@ -93,7 +100,10 @@
 <body>
     <div class="app-container">
         <header class="app-header">
-            <div class="app-title">AI Assistant Dashboard</div>
+            <div class="app-title">
+                <img src="logo.png" alt="Logo" class="logo">
+                AI Assistant Dashboard
+            </div>
             <div class="user-info">
                 <span class="user-email" id="userEmailDisplay">user@example.com</span>
                 <button class="logout-button" onclick="handleLogout()">Logout</button>
@@ -141,3 +151,4 @@
     <script src="auth.js"></script>
 </body>
 </html>
+
