@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -69,14 +69,73 @@
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             margin-top: 50px;
         }
+        
+        <!-- START NEW CODE -->
+        /* Password Reset Styles */
+        .forgot-password-container {
+            margin-top: 20px;
+            text-align: center;
+        }
+        .forgot-password-link {
+            font-size: 14px;
+            color: #6c757d;
+        }
+        #forgot-password-form {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        #forgot-password-form h3 {
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        .form-step input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .form-step button {
+            width: 100%;
+            padding: 10px;
+            background-color: #0d6efd;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        #forgot-password-message {
+            margin-top: 15px;
+            padding: 10px;
+            text-align: center;
+        }
+        .error-message {
+            color: #d32f2f;
+            background-color: #ffebee;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .success-message {
+            color: #388e3c;
+            background-color: #e8f5e9;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        <!-- END NEW CODE -->
     </style>
 </head>
 <body>
     <nav class="navbar navbar-expand-lg navbar-light bg-light shadow-sm mb-4">
         <div class="container">
+            <!-- START NEW CODE - FIXED LOGO -->
             <a class="navbar-brand" href="#">
-                <img src="https://www.advancedac.com/wp-content/uploads/2021/02/logo-ADAC@2x.png" alt="Advanced Aerospace Components">
+                <img src="https://aacbot.com/images/logo.png" alt="Advanced AI Assistant">
             </a>
+            <!-- END NEW CODE - FIXED LOGO -->
             <div class="navbar-text ms-3">
                 <h3>Advanced AI Assistant</h3>
                 <p class="text-muted mb-0">Powered by enterprise-grade language models</p>
@@ -175,6 +234,29 @@
                     <button type="submit" class="btn btn-primary w-100">Log In</button>
                     <div id="login-error" class="alert alert-danger mt-3" style="display: none;"></div>
                 </form>
+                
+                <!-- START NEW CODE - PASSWORD RESET SECTION -->
+                <div class="forgot-password-container">
+                  <p class="forgot-password-link">Forgot your password? <a href="#" id="show-forgot-password">Reset it here</a></p>
+                  
+                  <div id="forgot-password-form" style="display: none;">
+                    <h3>Reset Your Password</h3>
+                    <div class="form-step" id="forgot-password-step-1">
+                      <input type="email" id="forgot-password-email" placeholder="Email Address" required>
+                      <button id="request-password-reset">Send Reset Code</button>
+                    </div>
+                    
+                    <div class="form-step" id="forgot-password-step-2" style="display: none;">
+                      <input type="text" id="reset-code" placeholder="Reset Code" required>
+                      <input type="password" id="new-password" placeholder="New Password" required>
+                      <button id="confirm-password-reset">Reset Password</button>
+                    </div>
+                    
+                    <div id="forgot-password-message"></div>
+                  </div>
+                </div>
+                <!-- END NEW CODE - PASSWORD RESET SECTION -->
+                
             </div>
             <div class="tab-pane fade" id="register-form">
                 <form id="register-form-element">
@@ -282,6 +364,135 @@
                     target.classList.add('show', 'active');
                 });
             });
+            
+            <!-- START NEW CODE - PASSWORD RESET EVENT LISTENERS -->
+            // Password Reset functionality
+            const showForgotPasswordLink = document.getElementById('show-forgot-password');
+            if (showForgotPasswordLink) {
+                showForgotPasswordLink.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const forgotPasswordForm = document.getElementById('forgot-password-form');
+                    forgotPasswordForm.style.display = forgotPasswordForm.style.display === 'none' ? 'block' : 'none';
+                });
+            }
+            
+            const requestPasswordResetBtn = document.getElementById('request-password-reset');
+            if (requestPasswordResetBtn) {
+                requestPasswordResetBtn.addEventListener('click', function() {
+                    const email = document.getElementById('forgot-password-email').value;
+                    const messageElement = document.getElementById('forgot-password-message');
+                    
+                    if (!email) {
+                        messageElement.textContent = 'Please enter your email address';
+                        messageElement.className = 'error-message';
+                        return;
+                    }
+                    
+                    messageElement.textContent = 'Sending reset code...';
+                    messageElement.className = '';
+                    
+                    // Call your API
+                    fetch(API_URL, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            requestType: 'auth',
+                            authAction: 'forgotPassword',
+                            email: email
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.error) {
+                            messageElement.textContent = data.error;
+                            messageElement.className = 'error-message';
+                        } else {
+                            messageElement.textContent = data.message;
+                            messageElement.className = 'success-message';
+                            
+                            // Show the second step
+                            document.getElementById('forgot-password-step-1').style.display = 'none';
+                            document.getElementById('forgot-password-step-2').style.display = 'block';
+                        }
+                    })
+                    .catch(error => {
+                        messageElement.textContent = 'An error occurred. Please try again.';
+                        messageElement.className = 'error-message';
+                        console.error(error);
+                    });
+                });
+            }
+            
+            const confirmPasswordResetBtn = document.getElementById('confirm-password-reset');
+            if (confirmPasswordResetBtn) {
+                confirmPasswordResetBtn.addEventListener('click', function() {
+                    const email = document.getElementById('forgot-password-email').value;
+                    const code = document.getElementById('reset-code').value;
+                    const newPassword = document.getElementById('new-password').value;
+                    const messageElement = document.getElementById('forgot-password-message');
+                    
+                    if (!email || !code || !newPassword) {
+                        messageElement.textContent = 'Please fill all fields';
+                        messageElement.className = 'error-message';
+                        return;
+                    }
+                    
+                    if (newPassword.length < 8) {
+                        messageElement.textContent = 'Password must be at least 8 characters';
+                        messageElement.className = 'error-message';
+                        return;
+                    }
+                    
+                    messageElement.textContent = 'Resetting password...';
+                    messageElement.className = '';
+                    
+                    // Call your API
+                    fetch(API_URL, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            requestType: 'auth',
+                            authAction: 'confirmForgotPassword',
+                            email: email,
+                            code: code,
+                            newPassword: newPassword
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.error) {
+                            messageElement.textContent = data.error;
+                            messageElement.className = 'error-message';
+                        } else {
+                            messageElement.textContent = 'Password reset successful! You can now login with your new password.';
+                            messageElement.className = 'success-message';
+                            
+                            // Reset the form and show login
+                            setTimeout(() => {
+                                document.getElementById('forgot-password-form').style.display = 'none';
+                                // Clear inputs
+                                document.getElementById('forgot-password-email').value = '';
+                                document.getElementById('reset-code').value = '';
+                                document.getElementById('new-password').value = '';
+                                
+                                // Reset form state for next time
+                                document.getElementById('forgot-password-step-1').style.display = 'block';
+                                document.getElementById('forgot-password-step-2').style.display = 'none';
+                            }, 3000);
+                        }
+                    })
+                    .catch(error => {
+                        messageElement.textContent = 'An error occurred. Please try again.';
+                        messageElement.className = 'error-message';
+                        console.error(error);
+                    });
+                });
+            }
+            <!-- END NEW CODE - PASSWORD RESET EVENT LISTENERS -->
         });
 
 
@@ -760,5 +971,3 @@
             return div.innerHTML;
         }
     </script>
-</body>
-</html>
