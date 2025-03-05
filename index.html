@@ -220,10 +220,6 @@
             color: var(--primary-color);
         }
 
-        .hidden {
-            display: none;
-        }
-
         /* Responsive adjustments */
         @media (max-width: 768px) {
             .header {
@@ -293,7 +289,7 @@
             </div>
 
             <!-- Sign Up Form -->
-            <div class="form-container hidden" id="signup-form">
+            <div class="form-container" id="signup-form" style="display: none;">
                 <div class="form-group">
                     <label for="signup-email">Email address</label>
                     <input type="email" id="signup-email" class="form-control" placeholder="Your email">
@@ -312,7 +308,7 @@
         </div>
 
         <!-- Password Reset - Step 1 -->
-        <div class="form-container hidden" id="reset-password-step1">
+        <div class="form-container" id="reset-password-step1" style="display: none;">
             <h3 style="text-align: center; margin-top: 0; margin-bottom: 20px;">Reset Your Password</h3>
             <div class="form-group">
                 <label for="reset-email">Email address</label>
@@ -324,7 +320,7 @@
         </div>
 
         <!-- Password Reset - Step 2 -->
-        <div class="form-container hidden" id="reset-password-step2">
+        <div class="form-container" id="reset-password-step2" style="display: none;">
             <h3 style="text-align: center; margin-top: 0; margin-bottom: 20px;">Enter Reset Code</h3>
             <div class="form-group">
                 <label for="verification-code">Reset Code</label>
@@ -347,6 +343,16 @@
     <script>
         // API URL
         const API_URL = 'https://c9z46e3pgg.execute-api.us-east-2.amazonaws.com/prod/aac-api';
+        
+        // Debug mode - set to true to see detailed console logs
+        const DEBUG = true;
+        
+        // Log function that only logs in DEBUG mode
+        function debugLog(...args) {
+            if (DEBUG) {
+                console.log(...args);
+            }
+        }
 
         // DOM Elements
         const loginTab = document.getElementById('login-tab');
@@ -361,8 +367,10 @@
         const backToStep1Link = document.getElementById('back-to-step1');
         const headerLoginBtn = document.getElementById('header-login-btn');
         const headerSignupBtn = document.getElementById('header-signup-btn');
+        const sendResetCodeBtn = document.getElementById('send-reset-code-btn');
+        const resetPasswordBtn = document.getElementById('reset-password-btn');
 
-        // Show/Hide Functions
+        // Tab Switching Functions
         function showLoginForm() {
             authSection.style.display = 'block';
             loginForm.style.display = 'block';
@@ -392,7 +400,7 @@
             document.getElementById('reset-step1-message').className = 'message';
         }
 
-        function showResetStep2() {
+        function showResetStep2(email) {
             authSection.style.display = 'none';
             resetPasswordStep1.style.display = 'none';
             resetPasswordStep2.style.display = 'block';
@@ -401,10 +409,15 @@
             document.getElementById('confirm-new-password').value = '';
             document.getElementById('reset-step2-message').textContent = '';
             document.getElementById('reset-step2-message').className = 'message';
+            
+            // Store email for step 2
+            localStorage.setItem('resetEmail', email);
         }
 
-        // Helper Functions
+        // Message Display Function
         function showMessage(elementId, message, isError) {
+            debugLog(`Showing ${isError ? 'error' : 'success'} message: ${message}`);
+            
             const element = document.getElementById(elementId);
             element.textContent = message;
             if (isError) {
@@ -412,21 +425,64 @@
             } else {
                 element.className = 'message success-message';
             }
+            element.style.display = 'block';
+        }
+        
+        // API Call Function with Enhanced Error Handling
+        async function callApi(data) {
+            debugLog('Making API call with data:', data);
+            
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                
+                debugLog('API response status:', response.status);
+                
+                // Try to parse JSON, but handle non-JSON responses
+                let responseData;
+                const contentType = response.headers.get('content-type');
+                
+                if (contentType && contentType.includes('application/json')) {
+                    responseData = await response.json();
+                    debugLog('API JSON response:', responseData);
+                } else {
+                    const textResponse = await response.text();
+                    debugLog('API text response:', textResponse);
+                    responseData = { error: 'Invalid server response' };
+                }
+                
+                // Check for HTTP error codes
+                if (!response.ok) {
+                    debugLog('API returned error status:', response.status);
+                    if (!responseData.error) {
+                        responseData.error = `Server error: ${response.status} ${response.statusText}`;
+                    }
+                }
+                
+                return responseData;
+            } catch (error) {
+                debugLog('API call exception:', error);
+                return { error: 'Network error. Please check your connection and try again.' };
+            }
         }
 
-        // Tab Switching
+        // Event Listeners
         loginTab.addEventListener('click', showLoginForm);
         signupTab.addEventListener('click', showSignupForm);
+        
         headerLoginBtn.addEventListener('click', (e) => {
             e.preventDefault();
             showLoginForm();
         });
+        
         headerSignupBtn.addEventListener('click', (e) => {
             e.preventDefault();
             showSignupForm();
         });
-
-        // Reset Password Navigation
+        
         forgotPasswordLink.addEventListener('click', (e) => {
             e.preventDefault();
             showResetStep1();
@@ -443,7 +499,7 @@
         });
 
         // Login Form Submission
-        document.getElementById('login-button').addEventListener('click', () => {
+        document.getElementById('login-button').addEventListener('click', async () => {
             const email = document.getElementById('login-email').value.trim();
             const password = document.getElementById('login-password').value;
             
@@ -454,43 +510,33 @@
             
             showMessage('login-message', 'Logging in...', false);
             
-            fetch(API_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    requestType: 'auth',
-                    authAction: 'login',
-                    email: email,
-                    password: password
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.error) {
-                    showMessage('login-message', data.error, true);
-                } else {
-                    showMessage('login-message', 'Login successful!', false);
-                    
-                    // Store tokens
-                    localStorage.setItem('idToken', data.idToken);
-                    localStorage.setItem('accessToken', data.accessToken);
-                    localStorage.setItem('refreshToken', data.refreshToken);
-                    localStorage.setItem('userEmail', email);
-                    
-                    // Redirect to app page
-                    setTimeout(() => {
-                        window.location.href = 'app.html';
-                    }, 1000);
-                }
-            })
-            .catch(error => {
-                console.error('Login error:', error);
-                showMessage('login-message', 'An error occurred. Please try again.', true);
+            const data = await callApi({
+                requestType: 'auth',
+                authAction: 'login',
+                email: email,
+                password: password
             });
+            
+            if (data.error) {
+                showMessage('login-message', data.error, true);
+            } else {
+                showMessage('login-message', 'Login successful!', false);
+                
+                // Store tokens
+                localStorage.setItem('idToken', data.idToken);
+                localStorage.setItem('accessToken', data.accessToken);
+                localStorage.setItem('refreshToken', data.refreshToken);
+                localStorage.setItem('userEmail', email);
+                
+                // Redirect to app page
+                setTimeout(() => {
+                    window.location.href = 'app.html';
+                }, 1000);
+            }
         });
 
         // Signup Form Submission
-        document.getElementById('signup-button').addEventListener('click', () => {
+        document.getElementById('signup-button').addEventListener('click', async () => {
             const email = document.getElementById('signup-email').value.trim();
             const password = document.getElementById('signup-password').value;
             const confirmPassword = document.getElementById('signup-confirm-password').value;
@@ -507,144 +553,143 @@
             
             showMessage('signup-message', 'Creating account...', false);
             
-            fetch(API_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    requestType: 'auth',
-                    authAction: 'register',
-                    email: email,
-                    password: password
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.error) {
-                    showMessage('signup-message', data.error, true);
-                } else {
-                    showMessage('signup-message', 'Account created! Please check your email to verify your account.', false);
-                    // Clear fields after successful signup
-                    document.getElementById('signup-email').value = '';
-                    document.getElementById('signup-password').value = '';
-                    document.getElementById('signup-confirm-password').value = '';
-                }
-            })
-            .catch(error => {
-                console.error('Signup error:', error);
-                showMessage('signup-message', 'An error occurred. Please try again.', true);
+            const data = await callApi({
+                requestType: 'auth',
+                authAction: 'register',
+                email: email,
+                password: password
             });
+            
+            if (data.error) {
+                showMessage('signup-message', data.error, true);
+            } else {
+                showMessage('signup-message', 'Account created! Please check your email to verify your account.', false);
+                // Clear fields after successful signup
+                document.getElementById('signup-email').value = '';
+                document.getElementById('signup-password').value = '';
+                document.getElementById('signup-confirm-password').value = '';
+            }
         });
 
-        // Send Reset Code
-        document.getElementById('send-reset-code-btn').addEventListener('click', () => {
+        // Send Reset Code Button
+        sendResetCodeBtn.addEventListener('click', async () => {
+            debugLog('Send reset code button clicked');
+            
+            // Disable button to prevent multiple clicks
+            sendResetCodeBtn.disabled = true;
+            
             const email = document.getElementById('reset-email').value.trim();
             
             if (!email) {
                 showMessage('reset-step1-message', 'Please enter your email address', true);
+                sendResetCodeBtn.disabled = false;
                 return;
             }
             
+            // Show loading state
+            sendResetCodeBtn.textContent = 'Sending...';
             showMessage('reset-step1-message', 'Sending reset code...', false);
             
-            fetch(API_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    requestType: 'auth',
-                    authAction: 'forgotPassword',
-                    email: email
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                console.log('Reset code response:', data); // For debugging
-                
-                if (data.error) {
-                    showMessage('reset-step1-message', data.error, true);
-                } else {
-                    showMessage('reset-step1-message', 'Reset code sent! Check your email.', false);
-                    
-                    // Store email for step 2
-                    localStorage.setItem('resetEmail', email);
-                    
-                    // Move to step 2 after a short delay
-                    setTimeout(() => {
-                        showResetStep2();
-                    }, 1500);
-                }
-            })
-            .catch(error => {
-                console.error('Send reset code error:', error);
-                showMessage('reset-step1-message', 'An error occurred. Please try again.', true);
+            // Make API call with enhanced error handling
+            const data = await callApi({
+                requestType: 'auth',
+                authAction: 'forgotPassword',
+                email: email
             });
+            
+            // Reset button state
+            sendResetCodeBtn.textContent = 'Send Reset Code';
+            sendResetCodeBtn.disabled = false;
+            
+            if (data.error) {
+                // Show specific error message
+                showMessage('reset-step1-message', data.error, true);
+            } else {
+                // Success case
+                showMessage('reset-step1-message', 'Reset code sent! Check your email.', false);
+                
+                // Move to step 2 after delay
+                setTimeout(() => {
+                    showResetStep2(email);
+                }, 1500);
+            }
         });
 
-        // Reset Password Confirmation
-        document.getElementById('reset-password-btn').addEventListener('click', () => {
+        // Reset Password Button
+        resetPasswordBtn.addEventListener('click', async () => {
+            debugLog('Reset password button clicked');
+            
+            // Disable button to prevent multiple clicks
+            resetPasswordBtn.disabled = true;
+            
             const code = document.getElementById('verification-code').value.trim();
             const newPassword = document.getElementById('new-password').value;
             const confirmNewPassword = document.getElementById('confirm-new-password').value;
             const email = localStorage.getItem('resetEmail');
             
-            if (!code || !newPassword || !confirmNewPassword) {
-                showMessage('reset-step2-message', 'Please fill in all fields', true);
+            // Validation
+            if (!code) {
+                showMessage('reset-step2-message', 'Please enter the verification code', true);
+                resetPasswordBtn.disabled = false;
+                return;
+            }
+            
+            if (!newPassword) {
+                showMessage('reset-step2-message', 'Please enter a new password', true);
+                resetPasswordBtn.disabled = false;
                 return;
             }
             
             if (newPassword !== confirmNewPassword) {
                 showMessage('reset-step2-message', 'Passwords do not match', true);
+                resetPasswordBtn.disabled = false;
                 return;
             }
             
             if (!email) {
                 showMessage('reset-step2-message', 'Email information missing. Please start over.', true);
+                resetPasswordBtn.disabled = false;
                 setTimeout(() => {
                     showResetStep1();
                 }, 1500);
                 return;
             }
             
+            // Show loading state
+            resetPasswordBtn.textContent = 'Resetting...';
             showMessage('reset-step2-message', 'Resetting password...', false);
             
-            fetch(API_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    requestType: 'auth',
-                    authAction: 'confirmForgotPassword',
-                    email: email,
-                    code: code,
-                    newPassword: newPassword
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                console.log('Reset password response:', data); // For debugging
-                
-                if (data.error) {
-                    showMessage('reset-step2-message', data.error, true);
-                } else {
-                    showMessage('reset-step2-message', 'Password reset successful!', false);
-                    
-                    // Clear stored email
-                    localStorage.removeItem('resetEmail');
-                    
-                    // Redirect to login after success
-                    setTimeout(() => {
-                        showLoginForm();
-                        document.getElementById('login-email').value = email;
-                        document.getElementById('login-message').textContent = 'Your password has been reset. You can now log in with your new password.';
-                        document.getElementById('login-message').className = 'message success-message';
-                    }, 1500);
-                }
-            })
-            .catch(error => {
-                console.error('Reset password error:', error);
-                showMessage('reset-step2-message', 'An error occurred. Please try again.', true);
+            // Make API call with enhanced error handling
+            const data = await callApi({
+                requestType: 'auth',
+                authAction: 'confirmForgotPassword',
+                email: email,
+                code: code,
+                newPassword: newPassword
             });
+            
+            // Reset button state
+            resetPasswordBtn.textContent = 'Reset Password';
+            resetPasswordBtn.disabled = false;
+            
+            if (data.error) {
+                showMessage('reset-step2-message', data.error, true);
+            } else {
+                showMessage('reset-step2-message', 'Password reset successful!', false);
+                
+                // Clear stored email
+                localStorage.removeItem('resetEmail');
+                
+                // Redirect to login after success
+                setTimeout(() => {
+                    showLoginForm();
+                    document.getElementById('login-email').value = email;
+                    showMessage('login-message', 'Your password has been reset. You can now log in with your new password.', false);
+                }, 1500);
+            }
         });
 
-        // Add keypress event listeners for better UX
+        // Enter key support for all forms
         document.getElementById('login-password').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 document.getElementById('login-button').click();
@@ -659,21 +704,23 @@
 
         document.getElementById('reset-email').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
-                document.getElementById('send-reset-code-btn').click();
+                sendResetCodeBtn.click();
             }
         });
 
         document.getElementById('confirm-new-password').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
-                document.getElementById('reset-password-btn').click();
+                resetPasswordBtn.click();
             }
         });
 
-        // Check if user is already logged in
+        // Check if user is already logged in on page load
         document.addEventListener('DOMContentLoaded', () => {
+            debugLog('Document loaded, checking token');
+            
             const idToken = localStorage.getItem('idToken');
             if (idToken) {
-                // Redirect to app page if already logged in
+                debugLog('Token found, redirecting to app');
                 window.location.href = 'app.html';
             }
             
@@ -683,6 +730,8 @@
                 this.src = 'https://via.placeholder.com/40x40?text=AI';
                 this.onerror = null;
             };
+            
+            debugLog('Initialization complete');
         });
     </script>
 </body>
