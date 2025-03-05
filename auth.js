@@ -38,7 +38,13 @@ async function callApi(endpoint, method, data) {
             return await response.json();
         }
         
-        throw new Error(`Server returned ${response.status}`);
+        // Try to get error message from response
+        try {
+            const errorData = await response.json();
+            throw new Error(errorData.error || `Server returned ${response.status}`);
+        } catch (e) {
+            throw new Error(`Server returned ${response.status}`);
+        }
     } catch (fetchError) {
         console.warn("Fetch API failed, trying XMLHttpRequest as fallback");
         
@@ -58,7 +64,13 @@ async function callApi(endpoint, method, data) {
                         reject(new Error("Invalid JSON response"));
                     }
                 } else {
-                    reject(new Error(`Server returned ${this.status}`));
+                    // Try to extract error message
+                    try {
+                        const errorData = JSON.parse(this.responseText);
+                        reject(new Error(errorData.error || `Server returned ${this.status}`));
+                    } catch (e) {
+                        reject(new Error(`Server returned ${this.status}`));
+                    }
                 }
             };
             
@@ -105,6 +117,102 @@ function eraseCookie(name) {
     document.cookie = name + '=; Path=/; Expires=Thu, 01 Jan 1970 00:00:01 GMT;';
 }
 
+// ===== SIGNUP FUNCTIONS =====
+
+// Handle signup form submission
+function handleSignup() {
+    const email = document.getElementById('signupEmail').value;
+    const password = document.getElementById('signupPassword').value;
+    const confirmPassword = document.getElementById('confirmPassword').value;
+    
+    // Basic validation
+    if (!email || !password || !confirmPassword) {
+        showMessage('signupMessage', 'Please fill in all fields', 'error');
+        return;
+    }
+    
+    if (password !== confirmPassword) {
+        showMessage('signupMessage', 'Passwords do not match', 'error');
+        return;
+    }
+    
+    if (password.length < 8) {
+        showMessage('signupMessage', 'Password must be at least 8 characters long', 'error');
+        return;
+    }
+    
+    signupUser(email, password);
+}
+
+// Main signup function
+async function signupUser(email, password) {
+    console.log(`Attempting signup for: ${email}`);
+    
+    // Show loading state
+    setButtonLoading('signupButton', true, 'Creating Account...');
+    showMessage('signupMessage', '', '');
+    
+    try {
+        // Define API endpoints (primary and backup)
+        const endpoints = [
+            'https://ylwynk6l46.execute-api.us-east-2.amazonaws.com/default/register',
+            'https://ylwynk6l46.execute-api.us-east-2.amazonaws.com/default/AdvancedAgentBackend/register'
+        ];
+        
+        let userData = null;
+        let lastError = null;
+        
+        // Try each endpoint until one succeeds
+        for (const endpoint of endpoints) {
+            try {
+                userData = await callApi(endpoint, 'POST', { 
+                    requestType: 'auth', 
+                    authAction: 'register', 
+                    email, 
+                    password 
+                });
+                break; // Exit the loop if successful
+            } catch (err) {
+                console.warn(`Signup failed on endpoint ${endpoint}:`, err);
+                lastError = err;
+            }
+        }
+        
+        // If all endpoints failed
+        if (!userData) {
+            throw lastError || new Error("Failed to connect to any server");
+        }
+        
+        // Signup successful
+        console.log("Signup successful");
+        
+        // Show success message
+        document.getElementById('signupForm').style.display = 'none';
+        document.getElementById('signupSuccessSection').style.display = 'block';
+        
+    } catch (error) {
+        console.error("Signup error:", error);
+        
+        // Show user-friendly error message
+        let errorMessage = 'Signup failed. Please try again.';
+        
+        if (error.message) {
+            if (error.message.includes('already exists')) {
+                errorMessage = 'An account with this email already exists.';
+            } else if (error.message.includes('password') && error.message.includes('requirement')) {
+                errorMessage = 'Password does not meet requirements. Please use at least 8 characters, including uppercase, lowercase, and numbers.';
+            } else if (error.message.includes('network') || error.message.includes('connect')) {
+                errorMessage = 'Network error. Please check your internet connection and try again.';
+            }
+        }
+        
+        showMessage('signupMessage', errorMessage, 'error');
+    } finally {
+        // Reset button state
+        setButtonLoading('signupButton', false, 'Create Account');
+    }
+}
+
 // ===== LOGIN FUNCTION =====
 
 // Handle login form submission
@@ -143,7 +251,12 @@ async function loginUser(email, password, rememberMe = false) {
         // Try each endpoint until one succeeds
         for (const endpoint of endpoints) {
             try {
-                userData = await callApi(endpoint, 'POST', { email, password });
+                userData = await callApi(endpoint, 'POST', { 
+                    requestType: 'auth', 
+                    authAction: 'login', 
+                    email, 
+                    password 
+                });
                 break; // Exit the loop if successful
             } catch (err) {
                 console.warn(`Login failed on endpoint ${endpoint}:`, err);
@@ -158,7 +271,7 @@ async function loginUser(email, password, rememberMe = false) {
         
         // Login successful, store token
         console.log("Login successful");
-        localStorage.setItem('authToken', userData.token);
+        localStorage.setItem('authToken', userData.idToken);
         localStorage.setItem('userEmail', email);
         localStorage.setItem('loginTimestamp', Date.now().toString());
         
@@ -166,7 +279,7 @@ async function loginUser(email, password, rememberMe = false) {
         if (rememberMe) {
             console.log("Setting remember me for 30 days");
             // Store encrypted credentials in a cookie (better than plaintext)
-            const encryptedCreds = btoa(`${email}:${userData.token}`); // Simple Base64 encoding
+            const encryptedCreds = btoa(`${email}:${userData.idToken}`); // Simple Base64 encoding
             setCookie('rememberAuth', encryptedCreds, 30);
         }
         
@@ -181,8 +294,15 @@ async function loginUser(email, password, rememberMe = false) {
         
         // Show user-friendly error message
         let errorMessage = 'Login failed. Please check your credentials and try again.';
-        if (error.message.includes('network') || error.message.includes('connect')) {
-            errorMessage = 'Network error. Please check your internet connection and try again.';
+        
+        if (error.message) {
+            if (error.message.includes('not confirmed')) {
+                errorMessage = 'Account not confirmed. Please check your email for the verification link.';
+            } else if (error.message.includes('network') || error.message.includes('connect')) {
+                errorMessage = 'Network error. Please check your internet connection and try again.';
+            } else if (error.message.includes('disabled') || error.message.includes('locked')) {
+                errorMessage = 'Account is locked or disabled. Please contact support.';
+            }
         }
         
         showMessage('loginMessage', errorMessage, 'error');
@@ -203,21 +323,21 @@ function handleResetRequest() {
         return;
     }
     
-    requestPasswordReset(email);
+    requestPasswordResetLink(email);
 }
 
-// Request password reset code
-async function requestPasswordReset(email) {
-    console.log("Requesting password reset for:", email);
+// Request password reset link via email
+async function requestPasswordResetLink(email) {
+    console.log("Requesting password reset link for:", email);
     
     // Show loading state
-    setButtonLoading('resetRequestButton', true, 'Send Reset Code');
+    setButtonLoading('resetRequestButton', true, 'Send Reset Link');
     showMessage('resetMessage', '', '');
     
     try {
         const endpoints = [
-            'https://ylwynk6l46.execute-api.us-east-2.amazonaws.com/default/requestReset',
-            'https://ylwynk6l46.execute-api.us-east-2.amazonaws.com/default/AdvancedAgentBackend/requestReset'
+            'https://ylwynk6l46.execute-api.us-east-2.amazonaws.com/default/requestResetLink',
+            'https://ylwynk6l46.execute-api.us-east-2.amazonaws.com/default/AdvancedAgentBackend/requestResetLink'
         ];
         
         let result = null;
@@ -226,10 +346,20 @@ async function requestPasswordReset(email) {
         // Try each endpoint
         for (const endpoint of endpoints) {
             try {
-                result = await callApi(endpoint, 'POST', { email });
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, redirectUrl: window.location.origin + '/reset-confirm.html' })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`Server returned ${response.status}`);
+                }
+                
+                result = await response.json();
                 break;
             } catch (err) {
-                console.warn(`Reset request failed on endpoint ${endpoint}:`, err);
+                console.warn(`Reset link request failed on endpoint ${endpoint}:`, err);
                 lastError = err;
             }
         }
@@ -238,68 +368,69 @@ async function requestPasswordReset(email) {
             throw lastError || new Error("Failed to connect to any server");
         }
         
-        // Store email for verification step
-        localStorage.setItem('resetEmail', email);
-        
-        // Show success and reveal verification form
-        showMessage('resetMessage', 'Reset code sent! Check your email.', 'success');
+        // Hide form and show success message
         document.getElementById('resetRequestForm').style.display = 'none';
-        document.getElementById('resetVerificationForm').style.display = 'block';
+        document.getElementById('resetSuccessSection').style.display = 'block';
         
     } catch (error) {
-        console.error("Reset request error:", error);
+        console.error("Reset link request error:", error);
         
-        let errorMessage = 'Unable to send reset code. Please try again later.';
+        let errorMessage = 'Unable to send reset link. Please try again later or contact support.';
         if (error.message.includes('network') || error.message.includes('connect')) {
             errorMessage = 'Network error. Please check your internet connection.';
         }
         
         showMessage('resetMessage', errorMessage, 'error');
     } finally {
-        setButtonLoading('resetRequestButton', false, 'Send Reset Code');
+        setButtonLoading('resetRequestButton', false, 'Send Reset Link');
     }
 }
 
-// Handle password reset completion
-function handleResetCompletion() {
-    const code = document.getElementById('resetCode').value;
+// Handle password reset confirmation from the reset-confirm.html page
+function handleResetConfirmation() {
     const newPassword = document.getElementById('newPassword').value;
     const confirmPassword = document.getElementById('confirmPassword').value;
     
-    // Validation
-    if (!code || !newPassword || !confirmPassword) {
-        showMessage('resetVerificationMessage', 'Please fill in all fields', 'error');
+    // Validate passwords
+    if (!newPassword || !confirmPassword) {
+        showMessage('resetConfirmMessage', 'Please fill in all fields', 'error');
         return;
     }
     
     if (newPassword !== confirmPassword) {
-        showMessage('resetVerificationMessage', 'Passwords do not match', 'error');
+        showMessage('resetConfirmMessage', 'Passwords do not match', 'error');
         return;
     }
     
-    completePasswordReset(code, newPassword);
+    if (newPassword.length < 8) {
+        showMessage('resetConfirmMessage', 'Password must be at least 8 characters long', 'error');
+        return;
+    }
+    
+    // Get token and email from localStorage (stored when page loaded)
+    const token = localStorage.getItem('resetToken');
+    const email = localStorage.getItem('resetEmail');
+    
+    if (!token || !email) {
+        showMessage('resetConfirmMessage', 'Invalid reset session. Please try again with a new reset link.', 'error');
+        return;
+    }
+    
+    completePasswordReset(email, token, newPassword);
 }
 
-// Complete password reset
-async function completePasswordReset(code, newPassword) {
-    console.log("Completing password reset");
+// Complete the password reset process
+async function completePasswordReset(email, token, newPassword) {
+    console.log("Completing password reset with token");
     
     // Show loading state
-    setButtonLoading('resetCompleteButton', true, 'Reset Password');
-    showMessage('resetVerificationMessage', '', '');
-    
-    // Get stored email
-    const email = localStorage.getItem('resetEmail');
-    if (!email) {
-        showMessage('resetVerificationMessage', 'Session expired. Please restart the password reset process.', 'error');
-        setButtonLoading('resetCompleteButton', false, 'Reset Password');
-        return;
-    }
+    setButtonLoading('resetConfirmButton', true, 'Setting Password...');
+    showMessage('resetConfirmMessage', '', '');
     
     try {
         const endpoints = [
-            'https://ylwynk6l46.execute-api.us-east-2.amazonaws.com/default/resetPassword',
-            'https://ylwynk6l46.execute-api.us-east-2.amazonaws.com/default/AdvancedAgentBackend/resetPassword'
+            'https://ylwynk6l46.execute-api.us-east-2.amazonaws.com/default/confirmResetPassword',
+            'https://ylwynk6l46.execute-api.us-east-2.amazonaws.com/default/AdvancedAgentBackend/confirmResetPassword'
         ];
         
         let result = null;
@@ -308,10 +439,21 @@ async function completePasswordReset(code, newPassword) {
         // Try each endpoint
         for (const endpoint of endpoints) {
             try {
-                result = await callApi(endpoint, 'POST', { email, code, newPassword });
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, token, newPassword })
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || `Server returned ${response.status}`);
+                }
+                
+                result = await response.json();
                 break;
             } catch (err) {
-                console.warn(`Password reset failed on endpoint ${endpoint}:`, err);
+                console.warn(`Password reset confirmation failed on endpoint ${endpoint}:`, err);
                 lastError = err;
             }
         }
@@ -320,28 +462,32 @@ async function completePasswordReset(code, newPassword) {
             throw lastError || new Error("Failed to connect to any server");
         }
         
-        // Clear stored email
+        // Clear stored token and email
+        localStorage.removeItem('resetToken');
         localStorage.removeItem('resetEmail');
         
-        // Show success message
-        showMessage('resetVerificationMessage', 'Password reset successful! Redirecting to login...', 'success');
-        
-        // Redirect to login
-        setTimeout(() => {
-            window.location.href = 'login.html';
-        }, 2000);
+        // Hide form and show success
+        document.getElementById('resetConfirmForm').style.display = 'none';
+        document.getElementById('confirmSuccessSection').style.display = 'block';
         
     } catch (error) {
-        console.error("Password reset error:", error);
+        console.error("Password reset confirmation error:", error);
         
-        let errorMessage = 'Password reset failed. Please check your code and try again.';
-        if (error.message.includes('network') || error.message.includes('connect')) {
-            errorMessage = 'Network error. Please check your internet connection.';
+        let errorMessage = 'Password reset failed. ';
+        
+        if (error.message.includes('expired')) {
+            errorMessage += 'The reset link has expired. Please request a new one.';
+        } else if (error.message.includes('invalid')) {
+            errorMessage += 'Invalid reset token. Please request a new reset link.';
+        } else if (error.message.includes('network') || error.message.includes('connect')) {
+            errorMessage = 'Network error. Please check your internet connection and try again.';
+        } else {
+            errorMessage += 'Please try again or contact support.';
         }
         
-        showMessage('resetVerificationMessage', errorMessage, 'error');
+        showMessage('resetConfirmMessage', errorMessage, 'error');
     } finally {
-        setButtonLoading('resetCompleteButton', false, 'Reset Password');
+        setButtonLoading('resetConfirmButton', false, 'Set New Password');
     }
 }
 
