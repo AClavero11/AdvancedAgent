@@ -208,11 +208,6 @@
         
         .reset-password-container {
             display: none;
-            padding: 25px;
-            background-color: white;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            margin-top: 20px;
         }
         
         .reset-password-container h3 {
@@ -282,52 +277,54 @@
     </div>
 
     <!-- Main Content -->
-    <div class="main-container" id="auth-container">
-        <!-- Tab Navigation -->
-        <div class="tab-navigation">
-            <button class="tab-btn active" id="login-tab">Log In</button>
-            <button class="tab-btn" id="signup-tab">Sign Up</button>
-        </div>
+    <div class="main-container">
+        <div id="auth-container">
+            <!-- Tab Navigation -->
+            <div class="tab-navigation">
+                <button class="tab-btn active" id="login-tab">Log In</button>
+                <button class="tab-btn" id="signup-tab">Sign Up</button>
+            </div>
 
-        <!-- Login Form -->
-        <div class="form-container" id="login-form">
-            <div class="form-group">
-                <label for="login-email">Email address</label>
-                <input type="email" id="login-email" class="form-control" placeholder="Your email">
+            <!-- Login Form -->
+            <div class="form-container" id="login-form">
+                <div class="form-group">
+                    <label for="login-email">Email address</label>
+                    <input type="email" id="login-email" class="form-control" placeholder="Your email">
+                </div>
+                <div class="form-group">
+                    <label for="login-password">Password</label>
+                    <input type="password" id="login-password" class="form-control" placeholder="Your password">
+                </div>
+                <button id="login-button" class="btn btn-primary btn-block">Log In</button>
+                <div id="login-message" class="mt-3"></div>
+                <div class="forgot-password">
+                    Forgot your password? <a href="#" id="forgot-password-link">Reset it here</a>
+                </div>
             </div>
-            <div class="form-group">
-                <label for="login-password">Password</label>
-                <input type="password" id="login-password" class="form-control" placeholder="Your password">
-            </div>
-            <button id="login-button" class="btn btn-primary btn-block">Log In</button>
-            <div id="login-message" class="mt-3"></div>
-            <div class="forgot-password">
-                Forgot your password? <a href="#" id="forgot-password-link">Reset it here</a>
-            </div>
-        </div>
 
-        <!-- Sign Up Form -->
-        <div class="form-container" id="signup-form" style="display: none;">
-            <div class="form-group">
-                <label for="signup-email">Email address</label>
-                <input type="email" id="signup-email" class="form-control" placeholder="Your email">
+            <!-- Sign Up Form -->
+            <div class="form-container" id="signup-form" style="display: none;">
+                <div class="form-group">
+                    <label for="signup-email">Email address</label>
+                    <input type="email" id="signup-email" class="form-control" placeholder="Your email">
+                </div>
+                <div class="form-group">
+                    <label for="signup-password">Password</label>
+                    <input type="password" id="signup-password" class="form-control" placeholder="Choose a password">
+                </div>
+                <div class="form-group">
+                    <label for="signup-confirm-password">Confirm Password</label>
+                    <input type="password" id="signup-confirm-password" class="form-control" placeholder="Confirm your password">
+                </div>
+                <button id="signup-button" class="btn btn-primary btn-block">Sign Up</button>
+                <div id="signup-message" class="mt-3"></div>
             </div>
-            <div class="form-group">
-                <label for="signup-password">Password</label>
-                <input type="password" id="signup-password" class="form-control" placeholder="Choose a password">
-            </div>
-            <div class="form-group">
-                <label for="signup-confirm-password">Confirm Password</label>
-                <input type="password" id="signup-confirm-password" class="form-control" placeholder="Confirm your password">
-            </div>
-            <button id="signup-button" class="btn btn-primary btn-block">Sign Up</button>
-            <div id="signup-message" class="mt-3"></div>
         </div>
 
         <!-- Reset Password Forms -->
         <div class="reset-password-container" id="reset-password-container">
             <!-- Step 1: Request Reset Code -->
-            <div id="forgot-password-step-1">
+            <div class="form-container" id="forgot-password-step-1">
                 <h3>Reset Your Password</h3>
                 <div class="form-group">
                     <label for="forgot-password-email">Email address</label>
@@ -339,7 +336,7 @@
             </div>
 
             <!-- Step 2: Enter Reset Code and New Password -->
-            <div id="forgot-password-step-2">
+            <div class="form-container" id="forgot-password-step-2">
                 <h3>Enter Reset Code</h3>
                 <div class="form-group">
                     <label for="reset-code">Reset Code</label>
@@ -508,6 +505,8 @@
             e.preventDefault();
             authContainer.style.display = 'none';
             resetPasswordContainer.style.display = 'block';
+            forgotPasswordStep1.style.display = 'block';
+            forgotPasswordStep2.style.display = 'none';
         });
 
         // Back to Login
@@ -515,6 +514,10 @@
             e.preventDefault();
             resetPasswordContainer.style.display = 'none';
             authContainer.style.display = 'block';
+            loginForm.style.display = 'block';
+            signupForm.style.display = 'none';
+            loginTab.classList.add('active');
+            signupTab.classList.remove('active');
         });
 
         // Store email for reset flow
