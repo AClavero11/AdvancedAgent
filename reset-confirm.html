@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Set New Password | Your AI Assistant</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-box">
+            <div class="logo-container">
+                <img src="logo.png" alt="Logo" class="logo">
+            </div>
+            <h1>Set New Password</h1>
+            
+            <div id="resetConfirmMessage"></div>
+            
+            <!-- New Password Form -->
+            <form id="resetConfirmForm">
+                <div class="form-group">
+                    <label for="newPassword">New Password:</label>
+                    <input type="password" id="newPassword" name="newPassword" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="confirmPassword">Confirm Password:</label>
+                    <input type="password" id="confirmPassword" name="confirmPassword" required>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="button" id="resetConfirmButton" onclick="handleResetConfirmation()">
+                        Set New Password
+                    </button>
+                </div>
+            </form>
+            
+            <!-- Success Message (shown after password change) -->
+            <div id="confirmSuccessSection" style="display: none;">
+                <div class="success-message">
+                    <p>Your password has been successfully reset!</p>
+                </div>
+                
+                <div class="form-actions" style="margin-top: 20px;">
+                    <a href="login.html" class="button">Log In with New Password</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="auth.js"></script>
+    <script>
+        // Parse token from URL on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Get token from URL query string
+            const urlParams = new URLSearchParams(window.location.search);
+            const token = urlParams.get('token');
+            const email = urlParams.get('email');
+            
+            if (!token || !email) {
+                // No token or email found, show error
+                showMessage('resetConfirmMessage', 'Invalid or expired reset link. Please request a new password reset.', 'error');
+                document.getElementById('resetConfirmForm').style.display = 'none';
+            } else {
+                // Store token and email for form submission
+                localStorage.setItem('resetToken', token);
+                localStorage.setItem('resetEmail', email);
+            }
+        });
+    </script>
+</body>
+</html>
