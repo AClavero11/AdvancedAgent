@@ -1,472 +1,57 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Advanced AI Assistant</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --primary-color: #0d6efd;
-            --error-color: #dc3545;
-            --success-color: #28a745;
-            --light-bg: #f8f9fa;
-            --border-color: #dee2e6;
-        }
-        
-        body {
-            font-family: 'Inter', sans-serif;
-            margin: 0;
-            padding: 0;
-            color: #333;
-            background-color: #f5f5f7;
-        }
-        
-        .header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 15px 30px;
-            background-color: white;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-        }
-        
-        .logo-container {
-            display: flex;
-            align-items: center;
-        }
-        
-        .logo-container img {
-            height: 40px;
-            margin-right: 15px;
-        }
-        
-        .logo-text h1 {
-            font-size: 22px;
-            font-weight: 600;
-            margin: 0;
-            color: #555;
-        }
-        
-        .logo-text p {
-            font-size: 14px;
-            margin: 0;
-            color: #777;
-        }
-        
-        .auth-buttons {
-            display: flex;
-            gap: 10px;
-        }
-        
-        .btn {
-            display: inline-block;
-            font-weight: 500;
-            text-align: center;
-            vertical-align: middle;
-            user-select: none;
-            border: 1px solid transparent;
-            padding: 0.375rem 0.75rem;
-            font-size: 0.95rem;
-            line-height: 1.5;
-            border-radius: 4px;
-            transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out;
-            text-decoration: none;
-            cursor: pointer;
-        }
-        
-        .btn-primary {
-            color: #fff;
-            background-color: var(--primary-color);
-            border-color: var(--primary-color);
-        }
-        
-        .btn-outline-primary {
-            color: var(--primary-color);
-            background-color: transparent;
-            border-color: var(--primary-color);
-        }
-        
-        .btn-primary:hover {
-            background-color: #0b5ed7;
-            border-color: #0a58ca;
-        }
-        
-        .btn-outline-primary:hover {
-            color: #fff;
-            background-color: var(--primary-color);
-            border-color: var(--primary-color);
-        }
-
-        .main-container {
-            max-width: 450px;
-            margin: 50px auto;
-            background-color: white;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
-        }
-        
-        .tab-navigation {
-            display: flex;
-            border-bottom: 1px solid var(--border-color);
-        }
-        
-        .tab-btn {
-            flex: 1;
-            padding: 15px;
-            text-align: center;
-            cursor: pointer;
-            font-weight: 500;
-            background: none;
-            border: none;
-            border-bottom: 2px solid transparent;
-        }
-        
-        .tab-btn.active {
-            color: var(--primary-color);
-            border-bottom-color: var(--primary-color);
-        }
-        
-        .form-container {
-            padding: 25px;
-        }
-        
-        .form-group {
-            margin-bottom: 20px;
-        }
-        
-        .form-group label {
-            display: block;
-            font-weight: 500;
-            margin-bottom: 8px;
-            font-size: 14px;
-        }
-        
-        .form-control {
-            display: block;
-            width: 100%;
-            padding: 12px 15px;
-            font-size: 16px;
-            line-height: 1.5;
-            color: #495057;
-            background-color: #f0f4ff;
-            background-clip: padding-box;
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            box-sizing: border-box;
-            transition: border-color 0.15s ease-in-out;
-        }
-        
-        .form-control:focus {
-            color: #495057;
-            background-color: #fff;
-            border-color: #86b7fe;
-            outline: 0;
-            box-shadow: 0 0 0 3px rgba(13, 110, 253, 0.25);
-        }
-        
-        .btn-block {
-            display: block;
-            width: 100%;
-        }
-
-        .message {
-            padding: 10px;
-            border-radius: 4px;
-            margin-top: 15px;
-            font-size: 14px;
-            text-align: center;
-        }
-        
-        .error-message {
-            color: var(--error-color);
-            background-color: #f8d7da;
-        }
-        
-        .success-message {
-            color: var(--success-color);
-            background-color: #d4edda;
-        }
-        
-        .forgot-password {
-            text-align: center;
-            margin-top: 15px;
-            font-size: 14px;
-            color: #6c757d;
-        }
-        
-        .forgot-password a {
-            color: var(--primary-color);
-            text-decoration: none;
-        }
-        
-        .forgot-password a:hover {
-            text-decoration: underline;
-        }
-
-        /* Responsive adjustments */
-        @media (max-width: 768px) {
-            .header {
-                padding: 10px 15px;
-                flex-wrap: wrap;
-            }
-            
-            .main-container {
-                margin: 20px 15px;
-                max-width: none;
-            }
-            
-            .logo-container img {
-                height: 32px;
-            }
-            
-            .logo-text h1 {
-                font-size: 18px;
-            }
-            
-            .logo-text p {
-                font-size: 12px;
-            }
-        }
-    </style>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta http-equiv="Content-Style-Type" content="text/css">
+  <title></title>
+  <meta name="Generator" content="Cocoa HTML Writer">
+  <meta name="CocoaVersion" content="2575.4">
+  <style type="text/css">
+    p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica}
+    p.p2 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica; min-height: 14.0px}
+  </style>
 </head>
 <body>
-    <!-- Header -->
-    <div class="header">
-        <div class="logo-container">
-            <img src="logo.png" alt="Advanced AI Assistant Logo" onerror="this.src='https://via.placeholder.com/40x40?text=AI'; this.onerror=null;">
-            <div class="logo-text">
-                <h1>Advanced AI Assistant</h1>
-                <p>Powered by enterprise-grade language models</p>
-            </div>
-        </div>
-        <div class="auth-buttons" id="header-auth-buttons">
-            <a href="#" class="btn btn-outline-primary" id="header-login-btn">Log In</a>
-            <a href="#" class="btn btn-primary" id="header-signup-btn">Sign Up</a>
-        </div>
-    </div>
-
-    <!-- Main Content -->
-    <div class="main-container">
-        <!-- Login/Signup Section -->
-        <div id="auth-section">
-            <div class="tab-navigation">
-                <button class="tab-btn active" id="login-tab">Log In</button>
-                <button class="tab-btn" id="signup-tab">Sign Up</button>
-            </div>
-
-            <!-- Login Form -->
-            <div class="form-container" id="login-form">
-                <div class="form-group">
-                    <label for="login-email">Email address</label>
-                    <input type="email" id="login-email" class="form-control" placeholder="Your email">
-                </div>
-                <div class="form-group">
-                    <label for="login-password">Password</label>
-                    <input type="password" id="login-password" class="form-control" placeholder="Your password">
-                </div>
-                <button id="login-button" class="btn btn-primary btn-block">Log In</button>
-                <div id="login-message" class="message"></div>
-                <div class="forgot-password">
-                    Forgot your password? <a href="reset-password.html">Reset it here</a>
-                </div>
-            </div>
-
-            <!-- Sign Up Form -->
-            <div class="form-container" id="signup-form" style="display: none;">
-                <div class="form-group">
-                    <label for="signup-email">Email address</label>
-                    <input type="email" id="signup-email" class="form-control" placeholder="Your email">
-                </div>
-                <div class="form-group">
-                    <label for="signup-password">Password</label>
-                    <input type="password" id="signup-password" class="form-control" placeholder="Choose a password">
-                </div>
-                <div class="form-group">
-                    <label for="signup-confirm-password">Confirm Password</label>
-                    <input type="password" id="signup-confirm-password" class="form-control" placeholder="Confirm your password">
-                </div>
-                <button id="signup-button" class="btn btn-primary btn-block">Sign Up</button>
-                <div id="signup-message" class="message"></div>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        // API URL
-        const API_URL = 'https://c9z46e3pgg.execute-api.us-east-2.amazonaws.com/prod/aac-api';
-        
-        // DOM Elements
-        const loginTab = document.getElementById('login-tab');
-        const signupTab = document.getElementById('signup-tab');
-        const loginForm = document.getElementById('login-form');
-        const signupForm = document.getElementById('signup-form');
-        const authSection = document.getElementById('auth-section');
-        const headerLoginBtn = document.getElementById('header-login-btn');
-        const headerSignupBtn = document.getElementById('header-signup-btn');
-
-        // Tab Switching Functions
-        function showLoginForm() {
-            loginForm.style.display = 'block';
-            signupForm.style.display = 'none';
-            loginTab.classList.add('active');
-            signupTab.classList.remove('active');
-        }
-
-        function showSignupForm() {
-            loginForm.style.display = 'none';
-            signupForm.style.display = 'block';
-            loginTab.classList.remove('active');
-            signupTab.classList.add('active');
-        }
-
-        // Message Display Function
-        function showMessage(elementId, message, isError) {
-            const element = document.getElementById(elementId);
-            element.textContent = message;
-            if (isError) {
-                element.className = 'message error-message';
-            } else {
-                element.className = 'message success-message';
-            }
-            element.style.display = 'block';
-        }
-        
-        // Event Listeners
-        loginTab.addEventListener('click', showLoginForm);
-        signupTab.addEventListener('click', showSignupForm);
-        
-        headerLoginBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            showLoginForm();
-        });
-        
-        headerSignupBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            showSignupForm();
-        });
-
-        // Login Form Submission
-        document.getElementById('login-button').addEventListener('click', () => {
-            const email = document.getElementById('login-email').value.trim();
-            const password = document.getElementById('login-password').value;
-            
-            if (!email || !password) {
-                showMessage('login-message', 'Please enter both email and password', true);
-                return;
-            }
-            
-            showMessage('login-message', 'Logging in...', false);
-            
-            fetch(API_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    requestType: 'auth',
-                    authAction: 'login',
-                    email: email,
-                    password: password
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.error) {
-                    showMessage('login-message', data.error, true);
-                } else {
-                    showMessage('login-message', 'Login successful!', false);
-                    
-                    // Store tokens
-                    localStorage.setItem('idToken', data.idToken);
-                    localStorage.setItem('accessToken', data.accessToken);
-                    localStorage.setItem('refreshToken', data.refreshToken);
-                    localStorage.setItem('userEmail', email);
-                    
-                    // Redirect to app page
-                    setTimeout(() => {
-                        window.location.href = 'app.html';
-                    }, 1000);
-                }
-            })
-            .catch(error => {
-                console.error('Login error:', error);
-                showMessage('login-message', 'Network error. Please check your connection and try again.', true);
-            });
-        });
-
-        // Signup Form Submission
-        document.getElementById('signup-button').addEventListener('click', () => {
-            const email = document.getElementById('signup-email').value.trim();
-            const password = document.getElementById('signup-password').value;
-            const confirmPassword = document.getElementById('signup-confirm-password').value;
-            
-            if (!email || !password || !confirmPassword) {
-                showMessage('signup-message', 'Please fill in all fields', true);
-                return;
-            }
-            
-            if (password !== confirmPassword) {
-                showMessage('signup-message', 'Passwords do not match', true);
-                return;
-            }
-            
-            showMessage('signup-message', 'Creating account...', false);
-            
-            fetch(API_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    requestType: 'auth',
-                    authAction: 'register',
-                    email: email,
-                    password: password
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.error) {
-                    showMessage('signup-message', data.error, true);
-                } else {
-                    showMessage('signup-message', 'Account created! Please check your email to verify your account.', false);
-                    // Clear fields after successful signup
-                    document.getElementById('signup-email').value = '';
-                    document.getElementById('signup-password').value = '';
-                    document.getElementById('signup-confirm-password').value = '';
-                }
-            })
-            .catch(error => {
-                console.error('Signup error:', error);
-                showMessage('signup-message', 'Network error. Please check your connection and try again.', true);
-            });
-        });
-
-        // Enter key support for all forms
-        document.getElementById('login-password').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                document.getElementById('login-button').click();
-            }
-        });
-
-        document.getElementById('signup-confirm-password').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                document.getElementById('signup-button').click();
-            }
-        });
-
-        // Check if user is already logged in on page load
-        document.addEventListener('DOMContentLoaded', () => {
-            const idToken = localStorage.getItem('idToken');
-            if (idToken) {
-                window.location.href = 'app.html';
-            }
-            
-            // Fix logo display
-            const logoImg = document.querySelector('.logo-container img');
-            logoImg.onerror = function() {
-                this.src = 'https://via.placeholder.com/40x40?text=AI';
-                this.onerror = null;
-            };
-        });
-    </script>
+<p class="p1">&lt;!DOCTYPE html&gt;</p>
+<p class="p1">&lt;html lang="en"&gt;</p>
+<p class="p1">&lt;head&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;meta charset="UTF-8"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;title&gt;Login | Your AI Assistant&lt;/title&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;link rel="stylesheet" href="styles.css"&gt;</p>
+<p class="p1">&lt;/head&gt;</p>
+<p class="p1">&lt;body&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;div class="auth-container"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;div class="auth-box"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;h1&gt;Login to Your AI Assistant&lt;/h1&gt;</p>
+<p class="p2"><span class="Apple-converted-space">            </span></p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;div id="loginMessage"&gt;&lt;/div&gt;</p>
+<p class="p2"><span class="Apple-converted-space">            </span></p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;form id="loginForm"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;div class="form-group"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>&lt;label for="email"&gt;Email:&lt;/label&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>&lt;input type="email" id="email" name="email" required&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;/div&gt;</p>
+<p class="p2"><span class="Apple-converted-space">                </span></p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;div class="form-group"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>&lt;label for="password"&gt;Password:&lt;/label&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>&lt;input type="password" id="password" name="password" required&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;/div&gt;</p>
+<p class="p2"><span class="Apple-converted-space">                </span></p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;div class="form-actions"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>&lt;button type="button" id="loginButton" onclick="handleLogin()"&gt;Login&lt;/button&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;/div&gt;</p>
+<p class="p2"><span class="Apple-converted-space">                </span></p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;div class="form-links"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>&lt;a href="reset-password.html"&gt;Forgot Password?&lt;/a&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                    </span>&lt;a href="signup.html"&gt;Create Account&lt;/a&gt;</p>
+<p class="p1"><span class="Apple-converted-space">                </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">            </span>&lt;/form&gt;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>&lt;/div&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;/div&gt;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>&lt;script src="auth.js"&gt;&lt;/script&gt;</p>
+<p class="p1">&lt;/body&gt;</p>
+<p class="p1">&lt;/html&gt;</p>
 </body>
 </html>
