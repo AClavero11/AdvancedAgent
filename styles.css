@@ -73,6 +73,14 @@ input:focus {
     box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.2);
 }
 
+/* Password requirements text */
+.password-requirements {
+    font-size: 12px;
+    color: #718096;
+    margin-top: 4px;
+    line-height: 1.4;
+}
+
 /* Remember Me checkbox styling */
 .remember-me {
     display: flex;
@@ -236,6 +244,10 @@ button:disabled {
     
     label {
         color: #cbd5e0;
+    }
+    
+    .password-requirements {
+        color: #a0aec0;
     }
     
     input[type="email"],
