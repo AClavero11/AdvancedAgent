@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up | Your AI Assistant</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-box">
+            <div class="logo-container">
+                <img src="logo.png" alt="Logo" class="logo">
+            </div>
+            <h1>Create Your Account</h1>
+            
+            <div id="signupMessage"></div>
+            
+            <form id="signupForm">
+                <div class="form-group">
+                    <label for="signupEmail">Email:</label>
+                    <input type="email" id="signupEmail" name="email" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="signupPassword">Password:</label>
+                    <input type="password" id="signupPassword" name="password" required>
+                    <div class="password-requirements">
+                        Must be at least 8 characters and include uppercase, lowercase, and numbers
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="confirmPassword">Confirm Password:</label>
+                    <input type="password" id="confirmPassword" name="confirmPassword" required>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="button" id="signupButton" onclick="handleSignup()">Create Account</button>
+                </div>
+                
+                <div class="form-links">
+                    <span>Already have an account?</span>
+                    <a href="login.html">Log In</a>
+                </div>
+            </form>
+            
+            <!-- Success Message (shown after successful signup) -->
+            <div id="signupSuccessSection" style="display: none;">
+                <div class="success-message">
+                    <p>Your account has been created successfully!</p>
+                    <p>Please check your email for a verification link to activate your account.</p>
+                </div>
+                
+                <div class="form-actions" style="margin-top: 20px;">
+                    <a href="login.html" class="button">Go to Login</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="auth.js"></script>
+</body>
+</html>
